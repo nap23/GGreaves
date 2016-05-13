@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>Google Maps JavaScript API v3 Example: Fusion Tables Layer</title>
+<style type="text/css">
+
+html, body, #map_canvas {
+	width:   750px;
+	height:  600px;
+	margin:  0;
+	padding: 0;
+}
+    .infowindow * {font-size: 90%; margin: 0}
+</style>
+
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+
+<script type="text/javascript">
+  google.load('visualization', '1', {'packages':['corechart', 'table', 'geomap']});
+function  createSidebar() {
+
+  var queryText = encodeURIComponent("SELECT * FROM 1q2kQay420krRz5YB6n2JRyaYwIEVrYJc7PIbqovW");
+  var query = new google.visualization.Query('http://www.google.com/fusiontables/gvizdata?tq='  + queryText);
+
+  query.send(getData);
+}
+  google.setOnLoadCallback(createSidebar);</script>
+
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+<script type="text/javascript">
+ var FTresponse = null;
+function getData(response) {
+if (!response) {
+  alert('no response');
+  return;
+}
+if (response.isError()) {
+  alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+  return;
+}
+  FTresponse = response;
+
+  numRows = response.getDataTable().getNumberOfRows();
+  numCols = response.getDataTable().getNumberOfColumns();
+
+  fusiontabledata = "<table><tr>";
+    fusiontabledata += "<th>" + response.getDataTable().getColumnLabel(0) + "</th>";
+
+  fusiontabledata += "</tr><tr>";
+  for(i = 0; i < numRows; i++) {
+      fusiontabledata += "<td><a href='javascript:myFTclick("+i+")'>"+response.getDataTable().getValue(i, 0) + "</a></td>";
+    fusiontabledata += "</tr><tr>";
+  }
+  fusiontabledata += "</table>"
+  document.getElementById('sidebar').innerHTML = fusiontabledata;
+}
+function myFTclick(row) {
+   //some code in here that centers map on the point being clicked//
+   var interviewee = FTresponse.getDataTable().getValue(row,0);
+   var org = FTresponse.getDataTable().getValue(row,1);
+	 var genre= FTresponse.getDataTable ().getValue(row,2)
+   var latlng =  FTresponse.getDataTable().getValue(row,3);
+   var split = latlng.split(',');
+   var position = new google.maps.LatLng(split[0], split[1]);
+   var audioLink = FTresponse.getDataTable().getValue(row,5);
+   if (!infoWindow) infoWindow = new google.maps.InfoWindow({});
+   infoWindow.setOptions({
+      content: '<div class="FT_infowindow"><h3><p>Interviewee:</p>  ' + interviewee +
+               '</h3>  <div><p>Genre:<p> ' + genre + '</div>  <div>' + org +'</div> <div><a href="' + audioLink + '">Audio</a></div></div>',
+
+      pixelOffset: new google.maps.Size(0, 2),
+      position: position
+    });
+    infoWindow.open(map);
+}
+var map = null;
+var infoWindow = null;
+function initialize() {
+  map = new google.maps.Map(document.getElementById('map_canvas'), {
+        center: new google.maps.LatLng(47.61388866866544, -122.33205800174704),
+        zoom: 14
+      });
+			var style = [
+				{
+					featureType: 'all',
+					elementType: 'all',
+					stylers: [
+						{ saturation: -27 }
+					]
+				}
+			];
+			var styledMapType = new google.maps.StyledMapType(style, {
+				map: map,
+				name: 'Styled Map'
+			});
+			map.mapTypes.set('map-style', styledMapType);
+			map.setMapTypeId('map-style');
+			layer_0 = new google.maps.FusionTablesLayer({
+				query: {
+					select: "col2",
+					from: "1q2kQay420krRz5YB6n2JRyaYwIEVrYJc7PIbqovW"
+				},
+				map: map,
+				styleId: 2,
+				templateId: 2
+			});
+  layer = new google.maps.FusionTablesLayer("1q2kQay420krRz5YB6n2JRyaYwIEVrYJc7PIbqovW", {suppressInfoWindows: true});
+  layer.setMap(map);
+  google.maps.event.addListener(layer, "click", function(event) {
+    infoWindow.close();
+    infoWindow.setContent(event.infoWindowHtml);
+    infoWindow.setPosition(event.latLng);
+    infoWindow.open(map);
+  });
+  infoWindow = new google.maps.InfoWindow();
+
+	};
+    function changeMap_0() {
+      var whereClause;
+      var searchString = document.getElementById('search-string_0').value.replace(/'/g, "\\'");
+      if (searchString != '--Select--') {
+        whereClause = "'Genre' = '" + searchString + "'";
+      }
+      layer_0.setOptions({
+        query: {
+          select: "col2",
+          from: "1q2kQay420krRz5YB6n2JRyaYwIEVrYJc7PIbqovW",
+          where: whereClause
+        }
+      });
+    };
+		  google.maps.event.addListener(layer, "click", function(event) {
+				map.setCenter()
+});
+
+</script>
+</head>
+<body onload="initialize()">
+<table style="width:100%;"><tr><td>
+        <div id="map_canvas">
+        </div>
+</td><td>
+<div id="sidebar" style="width:300px;height:600px; overflow:auto"></div>
+</td></tr>
+</table>
+
+<div id="map-canvas"></div>
+    <div style="margin-top: 10px;">
+      <label class="layer-wizard-search-label">
+        Browse by Genre
+        <select id="search-string_0" onchange="changeMap_0(this.value);">
+          <option value="--Select--">--Select--</option>
+          <option value="Civil Rights Movement">Civil Rights Movement</option>
+          <option value="Effects of Growth">Effects of Growth</option>
+          <option value="Human Rights Issues">Human Rights Issues</option>
+          <option value="Immigrants and Immigration">Immigrants and Immigration</option>
+          <option value="Local Politics">Local Politics</option>
+        </select>
+      </label>
+    </div>
+</body>
+</html>
